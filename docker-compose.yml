@@ -1,0 +1,18 @@
+# docker-compose para PRUEBA LOCAL de la app (standalone, sin la red central de SicaLab).
+# En el servidor, el admin usa en su lugar el BLOQUE DE SERVICIO del README (red sicalab_default + Nginx).
+services:
+  recategorizacion-jornales:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+    container_name: sicalab-recategorizacion-jornales-1
+    restart: unless-stopped
+    env_file: ./app/.env
+    ports:
+      - "3000:3000"            # solo para prueba local; en producción lo sirve Nginx
+    volumes:
+      - ./data:/app/data
+    healthcheck:
+      test: ["CMD", "nc", "-z", "127.0.0.1", "3000"]
+      interval: 30s
+      retries: 3

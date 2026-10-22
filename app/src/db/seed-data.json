@@ -1,0 +1,125 @@
+{
+ "empleados": [
+  {
+   "leg": 900,
+   "nombre": "PEREZ, JUAN (FICTICIO)",
+   "cuil": "20-00000100-0",
+   "depto": "CHOFER",
+   "supervisor": "SUPERVISOR, EJEMPLO A",
+   "categoria": "Chofer c/Reg de DNV",
+   "stAdic": 0,
+   "antig": 0,
+   "ingreso": "2026-01-01"
+  },
+  {
+   "leg": 901,
+   "nombre": "GOMEZ, MARIA (FICTICIO)",
+   "cuil": "20-00000101-0",
+   "depto": "PERSONAL DE PRODUCCION",
+   "supervisor": "SUPERVISOR, EJEMPLO A",
+   "categoria": "OFICIAL MULTIPLE",
+   "stAdic": 137,
+   "antig": 3,
+   "ingreso": "2023-02-01"
+  },
+  {
+   "leg": 902,
+   "nombre": "LOPEZ, CARLOS (FICTICIO)",
+   "cuil": "20-00000102-0",
+   "depto": "PERSONAL DE PRODUCCION",
+   "supervisor": "SUPERVISOR, EJEMPLO A",
+   "categoria": "OPERARIO ESPECIALIZ",
+   "stAdic": 274,
+   "antig": 6,
+   "ingreso": "2020-03-01"
+  },
+  {
+   "leg": 903,
+   "nombre": "DIAZ, ANA (FICTICIO)",
+   "cuil": "20-00000103-0",
+   "depto": "PERSONAL DE PRODUCCION",
+   "supervisor": "SUPERVISOR, EJEMPLO A",
+   "categoria": "OFICIAL",
+   "stAdic": 411,
+   "antig": 9,
+   "ingreso": "2017-04-01"
+  },
+  {
+   "leg": 904,
+   "nombre": "MARTINEZ, LUIS (FICTICIO)",
+   "cuil": "20-00000104-0",
+   "depto": "PERSONAL DE PRODUCCION",
+   "supervisor": "SUPERVISOR, EJEMPLO A",
+   "categoria": "OPER. ESP. MULTIPLE",
+   "stAdic": 548,
+   "antig": 12,
+   "ingreso": "2014-05-01"
+  },
+  {
+   "leg": 905,
+   "nombre": "SOSA, PABLO (FICTICIO)",
+   "cuil": "20-00000105-0",
+   "depto": "CHOFER",
+   "supervisor": "SUPERVISOR, EJEMPLO B",
+   "categoria": "Chofer c/Reg de Carg",
+   "stAdic": 685,
+   "antig": 15,
+   "ingreso": "2011-06-01"
+  },
+  {
+   "leg": 906,
+   "nombre": "ROMERO, LAURA (FICTICIO)",
+   "cuil": "20-00000106-0",
+   "depto": "PERSONAL DE PRODUCCION",
+   "supervisor": "SUPERVISOR, EJEMPLO B",
+   "categoria": "MEDIO OFICIAL",
+   "stAdic": 822,
+   "antig": 18,
+   "ingreso": "2008-07-01"
+  },
+  {
+   "leg": 907,
+   "nombre": "TORRES, DIEGO (FICTICIO)",
+   "cuil": "20-00000107-0",
+   "depto": "PERSONAL DE PRODUCCION",
+   "supervisor": "SUPERVISOR, EJEMPLO B",
+   "categoria": "OPERARIO CALIFICADO",
+   "stAdic": 959,
+   "antig": 1,
+   "ingreso": "2025-08-01"
+  },
+  {
+   "leg": 908,
+   "nombre": "RUIZ, SOFIA (FICTICIO)",
+   "cuil": "20-00000108-0",
+   "depto": "PERSONAL DE PRODUCCION",
+   "supervisor": "SUPERVISOR, EJEMPLO B",
+   "categoria": "OFICIAL SUPERIOR - C",
+   "stAdic": 1096,
+   "antig": 4,
+   "ingreso": "2022-09-01"
+  },
+  {
+   "leg": 909,
+   "nombre": "FLORES, MARTIN (FICTICIO)",
+   "cuil": "20-00000109-0",
+   "depto": "PERSONAL DE PRODUCCION",
+   "supervisor": "SUPERVISOR, EJEMPLO B",
+   "categoria": "Chofer c/Reg de DNV",
+   "stAdic": 1233,
+   "antig": 7,
+   "ingreso": "2019-01-01"
+  }
+ ],
+ "escala": {
+  "Chofer c/Reg de DNV": 6433,
+  "OFICIAL MULTIPLE": 6418.6,
+  "OPERARIO ESPECIALIZ": 5387.45,
+  "OFICIAL": 5958.84,
+  "OPER. ESP. MULTIPLE": 5695.63,
+  "Chofer c/Reg de Carg": 5695.63,
+  "MEDIO OFICIAL": 5036.08,
+  "OPERARIO CALIFICADO": 4672.74,
+  "OFICIAL SUPERIOR - C": 6418.6
+ }
+}

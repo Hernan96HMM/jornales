@@ -1,0 +1,15 @@
+node_modules/
+.next/
+out/
+build/
+.env
+.env.local
+data/
+*.db
+*.db-shm
+*.db-wal
+.DS_Store
+npm-debug.log*
+
+# datos reales de empleados (PII) — nunca a git
+src/db/seed-data.real.json

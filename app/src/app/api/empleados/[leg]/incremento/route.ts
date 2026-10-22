@@ -1,0 +1,21 @@
+import { NextResponse } from 'next/server';
+import { getSession } from '@/lib/session';
+import { aplicarIncremento } from '@/lib/service';
+
+export const dynamic = 'force-dynamic';
+
+export async function POST(req: Request, { params }: { params: { leg: string } }) {
+  const user = await getSession();
+  if (!user) return NextResponse.json({ error: 'No autenticado' }, { status: 401 });
+  const leg = Number(params.leg);
+  const b = await req.json().catch(() => ({}));
+  if (b.nuevoAdic === undefined || b.nuevoAdic === null || b.nuevoAdic === '') {
+    return NextResponse.json({ error: 'Nuevo importe requerido' }, { status: 400 });
+  }
+  try {
+    const r = aplicarIncremento(leg, Number(b.nuevoAdic), user, b.nota ? String(b.nota) : undefined, b.adicional || 'ST Adic');
+    return NextResponse.json({ ok: true, ...r });
+  } catch (e) {
+    return NextResponse.json({ error: (e as Error).message }, { status: 400 });
+  }
+}
