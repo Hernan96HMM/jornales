@@ -1,25 +1,22 @@
 import { cookies } from 'next/headers';
 import { SignJWT, jwtVerify } from 'jose';
+import { getSecretKey } from './secret';
 
 export const SESSION_COOKIE = 'rj_session';
 export type Rol = 'admin' | 'rrhh';
 export type SessionUser = { id: number; email: string; nombre: string; rol: Rol };
-
-function secretKey(): Uint8Array {
-  return new TextEncoder().encode(process.env.SESSION_SECRET || 'dev-insecure-secret-change-me');
-}
 
 export async function signToken(u: SessionUser): Promise<string> {
   return new SignJWT({ id: u.id, email: u.email, nombre: u.nombre, rol: u.rol })
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
     .setExpirationTime('12h')
-    .sign(secretKey());
+    .sign(getSecretKey());
 }
 
 export async function verifyToken(token: string): Promise<SessionUser | null> {
   try {
-    const { payload } = await jwtVerify(token, secretKey());
+    const { payload } = await jwtVerify(token, getSecretKey());
     return {
       id: Number(payload.id),
       email: String(payload.email),

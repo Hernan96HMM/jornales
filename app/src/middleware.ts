@@ -1,14 +1,14 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { jwtVerify } from 'jose';
 import { SESSION_COOKIE } from '@/lib/session';
+import { getSecretKey } from '@/lib/secret';
 
 const PUBLIC_PATHS = ['/login', '/api/auth/login'];
 
 async function isValid(token: string | undefined): Promise<boolean> {
   if (!token) return false;
   try {
-    const secret = new TextEncoder().encode(process.env.SESSION_SECRET || 'dev-insecure-secret-change-me');
-    await jwtVerify(token, secret);
+    await jwtVerify(token, getSecretKey());
     return true;
   } catch {
     return false;
