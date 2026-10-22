@@ -43,7 +43,8 @@ try {
   }
 
   if (count('usuarios') === 0) {
-    const email = (process.env.ADMIN_EMAIL || 'jnunez@sica.com.ar').toLowerCase();
+    if (!process.env.ADMIN_EMAIL) throw new Error('[seed] falta ADMIN_EMAIL en .env');
+    const email = process.env.ADMIN_EMAIL.toLowerCase();
     const nombre = process.env.ADMIN_NOMBRE || 'Administrador';
     const pass = process.env.ADMIN_INITIAL_PASSWORD;
     if (!pass) throw new Error('[seed] falta ADMIN_INITIAL_PASSWORD en .env');

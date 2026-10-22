@@ -65,7 +65,8 @@ export function seedIfEmpty(db: BetterSQLite3Database<typeof schema>) {
 
   // Usuario administrador inicial
   if (!hayUsuarios) {
-    const email = process.env.ADMIN_EMAIL || 'jnunez@sica.com.ar';
+    const email = process.env.ADMIN_EMAIL;
+    if (!email) throw new Error('[seed] falta ADMIN_EMAIL en .env');
     const nombre = process.env.ADMIN_NOMBRE || 'Administrador';
     const pass = process.env.ADMIN_INITIAL_PASSWORD;
     if (!pass) throw new Error('[seed] falta ADMIN_INITIAL_PASSWORD en .env');
