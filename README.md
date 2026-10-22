@@ -93,6 +93,8 @@ npm run build && npm start      # o: npm run dev
     container_name: sicalab-recategorizacion-jornales-1
     restart: unless-stopped
     env_file: ./recategorizacion-jornales/.env
+    ports:
+      - "PUERTO:3000"   # elegir un puerto libre: docker ps --format '{{.Names}}\t{{.Ports}}'
     volumes:
       - ./recategorizacion-jornales/data:/app/data
     networks:
@@ -105,7 +107,7 @@ npm run build && npm start      # o: npm run dev
 
 5. **Levantar**: `cd /mnt/disco1/sicalab && docker compose up -d --build recategorizacion-jornales`
 6. **Migración** (opcional; la app ya auto-migra): `docker exec -it sicalab-recategorizacion-jornales-1 npm run db:migrate:prod`
-7. **Nginx**: agregar `nginx/recategorizacion-jornales.conf` a `nginx/nginx.conf` → `nginx -t && nginx -s reload`
+7. **Nginx**: agregar `nginx/recategorizacion-jornales.conf` a `nginx/nginx.conf` reemplazando `PUERTO` por el mismo puerto del compose → `nginx -t && nginx -s reload`
 8. **DNS FortiGate**: registro A `recategorizacion-jornales` → `192.168.0.195` (zona `.sica`)
 
 ---
@@ -113,6 +115,7 @@ npm run build && npm start      # o: npm run dev
 ## Seguridad
 
 - `SESSION_SECRET` obligatorio en producción (firma las sesiones). Generar uno aleatorio.
+- `SESSION_SECRET` debe tener al menos 32 caracteres; en producción la app se niega a iniciar sesión si falta o es el valor de ejemplo.
 - El admin inicial se siembra desde `.env` (`ADMIN_EMAIL` / `ADMIN_INITIAL_PASSWORD`). **Cambiar la contraseña al primer ingreso** (zona Usuarios).
 - Contraseñas guardadas con bcrypt; nunca en texto plano.
-- `app/src/db/seed-data.json` en el repo tiene **datos ficticios**. La nómina real (nombres, CUIL) vive en `app/src/db/seed-data.real.json`, que está en `.gitignore` y **nunca se sube**. En el servidor, antes del build: `cp app/src/db/seed-data.real.json app/src/db/seed-data.json`.
+- `app/src/db/seed-data.json` en el repo tiene **datos ficticios**. La nómina real (nombres, CUIL) vive en `app/src/db/seed-data.real.json`, que está en `.gitignore` y **nunca se sube**. En el servidor, antes del build: `cp app/src/db/seed-data.real.json app/src/db/seed-data.json`. El archivo real se copia al servidor con `scp` (no está en git). Como `seed-data.json` queda modificado localmente en el servidor, usar `git update-index --skip-worktree app/src/db/seed-data.json` para que el `git pull` no choque.
