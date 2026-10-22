@@ -23,16 +23,26 @@ Login propio por cookie de sesión (JWT HS256) + contraseñas con bcrypt.
 ## Estructura del repositorio
 
 ```
-recategorizacion-jornales/
-├── app/                     # código Next.js (se clona en /mnt/disco1/sicalab/recategorizacion-jornales/app/)
-│   ├── Dockerfile           # multi-stage, imagen final sin toolchain
-│   ├── .env.example         # variables (copiar a ../.env en el servidor)
-│   ├── drizzle/             # migraciones SQL generadas
-│   ├── scripts/             # migrate.mjs / seed.mjs
-│   └── src/                 # app, api, db, lib, components
+(raíz del repo = código Next.js; se clona en /mnt/disco1/sicalab/recategorizacion-jornales/app/)
+├── Dockerfile               # multi-stage, imagen final sin toolchain
+├── .env.example             # variables (copiar a ../.env en el servidor)
+├── drizzle/                 # migraciones SQL generadas
+├── scripts/                 # migrate.mjs / seed.mjs
+├── src/                     # app, api, db, lib, components
+├── public/                  # logos
+├── package.json / package-lock.json
 ├── docker-compose.yml       # para PRUEBA LOCAL (standalone)
 ├── nginx/recategorizacion-jornales.conf   # bloque server de ejemplo
 └── README.md
+```
+
+En el servidor queda:
+
+```
+/mnt/disco1/sicalab/recategorizacion-jornales/
+├── app/      # clon de este repo
+├── data/     # base SQLite (bind mount ./data:/app/data)
+└── .env      # variables reales (copiado de app/.env.example)
 ```
 
 La persistencia vive en `data/` (bind mount `./data:/app/data`). La base es `data/recategorizacion-jornales.db` (SQLite, WAL). **La app migra y siembra sola en el primer arranque** (parámetros, categorías, 120 empleados y el usuario admin inicial).
@@ -59,7 +69,7 @@ El **ítem 8 (alta en el servidor)** lo hace el Administrador de Sistemas.
 
 ```bash
 cd recategorizacion-jornales
-cp app/.env.example app/.env     # completar SESSION_SECRET (openssl rand -base64 48)
+cp .env.example .env            # completar SESSION_SECRET (openssl rand -base64 48), ADMIN_EMAIL y ADMIN_INITIAL_PASSWORD
 mkdir -p data
 docker compose up --build
 # abrir http://localhost:3000  → login con ADMIN_EMAIL / ADMIN_INITIAL_PASSWORD del .env
@@ -68,7 +78,6 @@ docker compose up --build
 Sin Docker, para desarrollo:
 
 ```bash
-cd app
 npm install
 cp .env.example .env            # DB_PATH=./data/recategorizacion-jornales.db para local
 npm run build && npm start      # o: npm run dev
@@ -80,9 +89,9 @@ npm run build && npm start      # o: npm run dev
 
 ## Pasos del Administrador de Sistemas (ítem 8)
 
-1. **Carpetas**: `mkdir -p /mnt/disco1/sicalab/recategorizacion-jornales/data`
+1. **Carpetas**: `mkdir -p /mnt/disco1/sicalab/recategorizacion-jornales/data && chown -R 1001:1001 /mnt/disco1/sicalab/recategorizacion-jornales/data` (uid/gid del `USER nextjs` del Dockerfile)
 2. **Código**: clonar el repo en `/mnt/disco1/sicalab/recategorizacion-jornales/app`
-3. **.env**: `cp app/.env.example ../.env` y completar `SESSION_SECRET` (y, si se desea, `ADMIN_*`).
+3. **.env**: desde `/mnt/disco1/sicalab/recategorizacion-jornales/app`, `cp .env.example ../.env` y completar `SESSION_SECRET`, `ADMIN_EMAIL` y `ADMIN_INITIAL_PASSWORD` (obligatorios).
 4. **Bloque de servicio** en el compose central `/mnt/disco1/sicalab/docker-compose.yml`:
 
 ```yaml
@@ -118,4 +127,4 @@ npm run build && npm start      # o: npm run dev
 - `SESSION_SECRET` debe tener al menos 32 caracteres; en producción la app se niega a iniciar sesión si falta o es el valor de ejemplo.
 - El admin inicial se siembra desde `.env` (`ADMIN_EMAIL` / `ADMIN_INITIAL_PASSWORD`). **Cambiar la contraseña al primer ingreso** (zona Usuarios).
 - Contraseñas guardadas con bcrypt; nunca en texto plano.
-- `app/src/db/seed-data.json` en el repo tiene **datos ficticios**. La nómina real (nombres, CUIL) vive en `app/src/db/seed-data.real.json`, que está en `.gitignore` y **nunca se sube**. En el servidor, antes del build: `cp app/src/db/seed-data.real.json app/src/db/seed-data.json`. El archivo real se copia al servidor con `scp` (no está en git). Como `seed-data.json` queda modificado localmente en el servidor, usar `git update-index --skip-worktree app/src/db/seed-data.json` para que el `git pull` no choque.
+- `src/db/seed-data.json` en el repo tiene **datos ficticios**. La nómina real (nombres, CUIL) vive en `src/db/seed-data.real.json`, que está en `.gitignore` y **nunca se sube**. En el servidor, antes del build: `cp src/db/seed-data.real.json src/db/seed-data.json`. El archivo real se copia al servidor con `scp` (no está en git). Como `seed-data.json` queda modificado localmente en el servidor, usar `git update-index --skip-worktree src/db/seed-data.json` para que el `git pull` no choque.

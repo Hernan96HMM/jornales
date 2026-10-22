@@ -7,3 +7,5 @@ data
 *.db
 npm-debug.log*
 README.md
+nginx
+docker-compose.yml
