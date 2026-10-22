@@ -1,11 +1,18 @@
 # ===== recategorizacion-jornales — Dockerfile multi-stage (Next.js 14 standalone + better-sqlite3) =====
 
-# --- deps: instala dependencias (incluye toolchain nativo para better-sqlite3) ---
+# --- deps: dependencias completas para compilar (incluye toolchain nativo para better-sqlite3) ---
 FROM node:20-alpine AS deps
 RUN apk add --no-cache python3 make g++
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci
+
+# --- deps-prod: node_modules de producción (necesario para scripts de migración/seed) ---
+FROM node:20-alpine AS deps-prod
+RUN apk add --no-cache python3 make g++
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --omit=dev
 
 # --- builder: compila la app ---
 FROM node:20-alpine AS builder
@@ -23,7 +30,8 @@ ENV PORT=3000
 # nc para el healthcheck (incluido en busybox de alpine)
 RUN addgroup -g 1001 -S nodejs && adduser -u 1001 -S nextjs -G nodejs
 
-# salida standalone de Next (incluye node_modules traceados, better-sqlite3 nativo incluido)
+# node_modules completo de producción primero; el standalone se copia encima
+COPY --from=deps-prod /app/node_modules ./node_modules
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
