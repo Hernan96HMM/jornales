@@ -130,6 +130,18 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;font-family:'Co
 .err{color:var(--red);font-size:12.5px;margin-top:8px;min-height:16px}
 
 /* Toasts */
+/* Ayuda / Tutorial */
+.help-fab{position:fixed;right:20px;bottom:20px;z-index:100;background:var(--navy);color:#fff;border:none;padding:11px 18px;border-radius:30px;font-size:13.5px;font-weight:600;box-shadow:0 6px 20px rgba(29,44,71,.35);cursor:pointer}
+.help-fab:hover{background:var(--navy-700);color:#fff}
+.help-modal{max-width:520px}
+.help-body{min-height:150px;font-size:13.5px}
+.help-body p{margin:0 0 10px}
+.help-body ul{margin:8px 0 8px 20px}
+.help-body li{margin:5px 0}
+.help-dots{display:flex;gap:6px;justify-content:center;padding:6px 0 0}
+.help-dots span{width:8px;height:8px;border-radius:50%;background:var(--bo2);cursor:pointer;transition:.15s}
+.help-dots span.on{background:var(--cel);transform:scale(1.2)}
+@media print{ .help-fab{display:none !important} }
 .toast-c{position:fixed;bottom:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px}
 .toast{padding:11px 18px;color:#fff;border-radius:9px;font-size:12.5px;box-shadow:0 8px 24px rgba(0,0,0,.25);animation:sl .2s ease}
 @keyframes sl{from{transform:translateX(20px);opacity:0}to{transform:translateX(0);opacity:1}}
@@ -143,3 +155,18 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;font-family:'Co
 .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .spacer{flex:1}
 .vlink{cursor:pointer;color:var(--navy);text-decoration:underline dotted}
+
+/* Impresión: ocultar sidebar y controles, dejar solo el informe */
+@media print{
+  .sidebar,.noprint{display:none !important}
+  .content{margin-left:0 !important}
+  body{background:#fff}
+  .wrap{padding:0 !important;max-width:none !important}
+  .card,.tbl-wrap{box-shadow:none !important;border:none !important}
+  thead th{background:#eef3f9 !important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .print-head{display:block !important}
+}
+.print-head{display:none}
+.print-head img{height:38px}
+.print-head h2{color:var(--navy);font-size:17px;margin:6px 0 2px}
+.print-head .meta{color:var(--t2);font-size:12px}

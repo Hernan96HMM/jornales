@@ -3,6 +3,7 @@ import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { api, fmt, fmt0, fmtPct, toast } from '@/lib/ui';
 import { calcDetalle, calcValorHora, type Params } from '@/lib/jornal';
+import { useUser } from '@/components/UserContext';
 
 type Cat = { id: number; nombre: string; basico: number };
 type Emp = {
@@ -12,6 +13,9 @@ type Emp = {
 };
 
 export default function NominaPage() {
+  const user = useUser();
+  const puedeEditar = user.rol === 'admin' || user.rol === 'rrhh';
+  const esSupervisor = user.rol === 'supervisor';
   const [emps, setEmps] = useState<Emp[]>([]);
   const [cats, setCats] = useState<Cat[]>([]);
   const [params, setParams] = useState<Params>({ stAcc: 0.195, incentivo: 0.15, presentismo: 0.05, aCuenta: 0.05 });
@@ -20,7 +24,7 @@ export default function NominaPage() {
   const [q, setQ] = useState(''); const [fsup, setFsup] = useState(''); const [fdep, setFdep] = useState('');
   const [fcat, setFcat] = useState(''); const [festado, setFestado] = useState('activos');
   const [expand, setExpand] = useState<Set<number>>(new Set());
-  const [modal, setModal] = useState<null | { tipo: 'nuevo' | 'recat' | 'inc'; emp?: Emp }>(null);
+  const [modal, setModal] = useState<null | { tipo: 'nuevo' | 'recat' | 'inc' | 'solicitud'; emp?: Emp }>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { setIncPres(localStorage.getItem('rj_incpres') !== '0'); load(); }, []);
@@ -81,8 +85,8 @@ export default function NominaPage() {
         <div className="spacer" />
         <input ref={fileRef} type="file" accept=".xlsx,.xls" className="hide"
           onChange={(e) => { const f = e.target.files?.[0]; if (f) onImport(f); e.target.value = ''; }} />
-        <button onClick={() => fileRef.current?.click()}>📥 Importar Excel</button>
-        <button className="btn-cel" onClick={() => setModal({ tipo: 'nuevo' })}>+ Nuevo empleado</button>
+        {puedeEditar && <button onClick={() => fileRef.current?.click()}>📥 Importar Excel</button>}
+        {puedeEditar && <button className="btn-cel" onClick={() => setModal({ tipo: 'nuevo' })}>+ Nuevo empleado</button>}
       </div>
 
       <div className="kpis">
@@ -127,10 +131,11 @@ export default function NominaPage() {
                         <td className="num"><b>{fmt(d.final)}</b></td>
                         <td>
                           <div className="row" style={{ gap: 5 }}>
-                            <button className="btn-sm" title="Recategorizar (cambiar categoría)" onClick={() => setModal({ tipo: 'recat', emp: e })}>↑ Categoría</button>
-                            <button className="btn-sm" title="Incremento de adicional (ST Adic)" onClick={() => setModal({ tipo: 'inc', emp: e })}>＋ Adicional</button>
+                            {puedeEditar && <button className="btn-sm" title="Recategorizar (cambiar categoría)" onClick={() => setModal({ tipo: 'recat', emp: e })}>↑ Categoría</button>}
+                            {puedeEditar && <button className="btn-sm" title="Incremento de adicional (ST Adic)" onClick={() => setModal({ tipo: 'inc', emp: e })}>＋ Adicional</button>}
+                            {(esSupervisor || puedeEditar) && <button className="btn-sm btn-cel" title="Crear solicitud formal (doble validación RRHH + Gerencia + documento)" onClick={() => setModal({ tipo: 'solicitud', emp: e })}>📝 Solicitar</button>}
                             <Link className="btn btn-sm" href={`/empleados/${e.leg}`}>Historial</Link>
-                            <button className="btn-sm btn-danger" onClick={() => doBaja(e)}>{e.activo === 0 ? 'Reactivar' : 'Baja'}</button>
+                            {puedeEditar && <button className="btn-sm btn-danger" onClick={() => doBaja(e)}>{e.activo === 0 ? 'Reactivar' : 'Baja'}</button>}
                           </div>
                         </td>
                       </tr>
@@ -168,7 +173,7 @@ export default function NominaPage() {
 
 /* ===== Modal: nuevo / recategorizar / incremento ===== */
 function EmpModal({ modal, cats, supervisores, deptos, onClose, onDone }: {
-  modal: { tipo: 'nuevo' | 'recat' | 'inc'; emp?: any }; cats: Cat[];
+  modal: { tipo: 'nuevo' | 'recat' | 'inc' | 'solicitud'; emp?: any }; cats: Cat[];
   supervisores: string[]; deptos: string[]; onClose: () => void; onDone: () => void;
 }) {
   const e = modal.emp;
@@ -176,7 +181,8 @@ function EmpModal({ modal, cats, supervisores, deptos, onClose, onDone }: {
     modal.tipo === 'nuevo'
       ? { leg: '', nombre: '', cuil: '', depto: '', supervisor: '', categoriaId: '', stAdic: 0, antig: 0, ingreso: '' }
       : modal.tipo === 'recat' ? { categoriaId: e.categoriaId || '', nota: '' }
-        : { nuevoAdic: e.stAdic, nota: '' });
+        : modal.tipo === 'inc' ? { nuevoAdic: e.stAdic, nota: '' }
+          : { categoriaPropuestaId: '', adicPropuesto: '', motivoNuevasResp: false, motivoNuevoPuesto: false, motivoTareaSuperior: false, detalle: '' });
   const [busy, setBusy] = useState(false);
   const up = (k: string, v: any) => setForm((f: any) => ({ ...f, [k]: v }));
 
@@ -191,15 +197,20 @@ function EmpModal({ modal, cats, supervisores, deptos, onClose, onDone }: {
         if (!form.categoriaId) throw new Error('Elegí la categoría destino');
         const r = await api(`/api/empleados/${e.leg}/recategorizar`, { method: 'POST', body: JSON.stringify(form) });
         toast(`Recategorizado (${fmtPct(r.pct)})`);
-      } else {
+      } else if (modal.tipo === 'inc') {
         const r = await api(`/api/empleados/${e.leg}/incremento`, { method: 'POST', body: JSON.stringify(form) });
         toast(`Incremento aplicado (${fmtPct(r.pct)})`);
+      } else {
+        if (!form.categoriaPropuestaId && form.adicPropuesto === '') throw new Error('Indicá una categoría propuesta o un nuevo adicional');
+        const r = await api('/api/solicitudes', { method: 'POST', body: JSON.stringify({ leg: e.leg, ...form }) });
+        toast(`Solicitud ${r.numero} creada — pendiente de validación`);
       }
       onDone();
     } catch (err) { toast((err as Error).message, 'err'); setBusy(false); }
   }
 
-  const titulo = modal.tipo === 'nuevo' ? 'Nuevo empleado' : modal.tipo === 'recat' ? `Recategorizar — ${e.nombre}` : `Incremento de adicional — ${e.nombre}`;
+  const titulo = modal.tipo === 'nuevo' ? 'Nuevo empleado' : modal.tipo === 'recat' ? `Recategorizar — ${e.nombre}`
+    : modal.tipo === 'inc' ? `Incremento de adicional — ${e.nombre}` : `Solicitar cambio — ${e.nombre}`;
   return (
     <div className="modal-bg" onClick={onClose}>
       <div className="modal" onClick={(ev) => ev.stopPropagation()}>
@@ -235,6 +246,26 @@ function EmpModal({ modal, cats, supervisores, deptos, onClose, onDone }: {
               <label className="fld">Nuevo importe ST Adic<input type="number" step="any" value={form.nuevoAdic} onChange={(ev) => up('nuevoAdic', ev.target.value)} /></label>
               <div style={{ height: 10 }} />
               <label className="fld">Nota (opcional)<input value={form.nota} onChange={(ev) => up('nota', ev.target.value)} /></label>
+            </>
+          )}
+          {modal.tipo === 'solicitud' && (
+            <>
+              <p style={{ marginBottom: 12, color: 'var(--t2)' }}>Categoría actual: <b>{e.categoria}</b> (${fmt0(e.basico)}) · ST Adic actual: <b>${fmt(e.stAdic)}</b>. La solicitud va a <b>doble validación</b> (RRHH + Gerencia) antes de aplicarse.</p>
+              <label className="fld" style={{ marginBottom: 8 }}>Motivo de la solicitud</label>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 12 }}>
+                <label style={{ display: 'flex', gap: 8, fontSize: 13, textTransform: 'none', letterSpacing: 0 }}><input type="checkbox" style={{ width: 'auto' }} checked={form.motivoNuevasResp} onChange={(ev) => up('motivoNuevasResp', ev.target.checked)} /> Nuevas responsabilidades a su cargo</label>
+                <label style={{ display: 'flex', gap: 8, fontSize: 13, textTransform: 'none', letterSpacing: 0 }}><input type="checkbox" style={{ width: 'auto' }} checked={form.motivoNuevoPuesto} onChange={(ev) => up('motivoNuevoPuesto', ev.target.checked)} /> Nuevo puesto con mayores responsabilidades</label>
+                <label style={{ display: 'flex', gap: 8, fontSize: 13, textTransform: 'none', letterSpacing: 0 }}><input type="checkbox" style={{ width: 'auto' }} checked={form.motivoTareaSuperior} onChange={(ev) => up('motivoTareaSuperior', ev.target.checked)} /> Tarea / oficio detallado en categoría superior</label>
+              </div>
+              <div className="grid2">
+                <label className="fld">Nueva categoría (opcional)
+                  <select value={form.categoriaPropuestaId} onChange={(ev) => up('categoriaPropuestaId', ev.target.value)}>
+                    <option value="">— sin cambio —</option>{cats.map((c) => <option key={c.id} value={c.id}>{c.nombre} (${fmt0(c.basico)})</option>)}
+                  </select></label>
+                <label className="fld">Nuevo ST Adic (opcional)<input type="number" step="any" placeholder={fmt0(e.stAdic)} value={form.adicPropuesto} onChange={(ev) => up('adicPropuesto', ev.target.value)} /></label>
+              </div>
+              <div style={{ height: 10 }} />
+              <label className="fld">Detalle / por qué del cambio<textarea rows={4} value={form.detalle} onChange={(ev) => up('detalle', ev.target.value)} placeholder="Breve detalle de cuál/es responsabilidades o tareas justifican el cambio…" /></label>
             </>
           )}
         </div>

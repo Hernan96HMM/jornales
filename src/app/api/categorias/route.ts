@@ -15,6 +15,7 @@ export async function GET() {
 export async function POST(req: Request) {
   const user = await getSession();
   if (!user) return NextResponse.json({ error: 'No autenticado' }, { status: 401 });
+  if (!['admin', 'rrhh'].includes(user.rol)) return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
   const b = await req.json().catch(() => ({}));
   if (!b.nombre || b.basico === undefined) return NextResponse.json({ error: 'Nombre y básico requeridos' }, { status: 400 });
   const db = getDb();

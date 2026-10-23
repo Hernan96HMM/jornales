@@ -9,6 +9,7 @@ export const dynamic = 'force-dynamic';
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {
   const user = await getSession();
   if (!user) return NextResponse.json({ error: 'No autenticado' }, { status: 401 });
+  if (!['admin', 'rrhh'].includes(user.rol)) return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
   const id = Number(params.id);
   const b = await req.json().catch(() => ({}));
   const db = getDb();

@@ -6,7 +6,9 @@ export const usuarios = sqliteTable('usuarios', {
   email: text('email').notNull().unique(),
   nombre: text('nombre').notNull(),
   passwordHash: text('password_hash').notNull(),
-  rol: text('rol', { enum: ['admin', 'rrhh'] }).notNull().default('rrhh'),
+  rol: text('rol', { enum: ['admin', 'rrhh', 'supervisor', 'gerencia'] }).notNull().default('rrhh'),
+  // para rol 'supervisor': nombre tal como figura en la columna Supervisor del Excel (ve solo esa gente)
+  supervisorRef: text('supervisor_ref'),
   activo: integer('activo').notNull().default(1),
   creado: text('creado').notNull(),
 });
@@ -99,8 +101,46 @@ export const propuestas = sqliteTable('propuestas', {
   actualizado: text('actualizado').notNull(),
 });
 
+/* ===== Solicitudes de modificación (flujo supervisor → RRHH + Gerencia) ===== */
+export const solicitudes = sqliteTable('solicitudes', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  numero: text('numero').notNull(),          // ej: SICA 05.26-001
+  periodo: text('periodo').notNull(),         // ej: Mayo 2026
+  empleadoLeg: integer('empleado_leg').notNull(),
+  empleadoNombre: text('empleado_nombre').notNull(),
+  tipo: text('tipo', { enum: ['recategorizacion', 'incremento_adicional', 'ambos'] }).notNull(),
+  // motivo (checkboxes del formulario)
+  motivoNuevasResp: integer('motivo_nuevas_resp').notNull().default(0),
+  motivoNuevoPuesto: integer('motivo_nuevo_puesto').notNull().default(0),
+  motivoTareaSuperior: integer('motivo_tarea_superior').notNull().default(0),
+  detalle: text('detalle').notNull().default(''),   // "breve detalle de cuál/es" (el por qué)
+  // snapshot al momento de la solicitud
+  categoriaActualId: integer('categoria_actual_id'),
+  categoriaActualNombre: text('categoria_actual_nombre'),
+  basicoActual: real('basico_actual'),
+  categoriaPropuestaId: integer('categoria_propuesta_id'),
+  categoriaPropuestaNombre: text('categoria_propuesta_nombre'),
+  basicoPropuesto: real('basico_propuesto'),
+  adicActual: real('adic_actual'),
+  adicPropuesto: real('adic_propuesto'),
+  // doble validación
+  estado: text('estado', { enum: ['pendiente', 'rechazada', 'aprobada', 'aplicada'] }).notNull().default('pendiente'),
+  rrhhEstado: text('rrhh_estado', { enum: ['pendiente', 'aprobado', 'rechazado'] }).notNull().default('pendiente'),
+  rrhhUsuario: text('rrhh_usuario'), rrhhFecha: text('rrhh_fecha'), rrhhNota: text('rrhh_nota'),
+  gerenciaEstado: text('gerencia_estado', { enum: ['pendiente', 'aprobado', 'rechazado'] }).notNull().default('pendiente'),
+  gerenciaUsuario: text('gerencia_usuario'), gerenciaFecha: text('gerencia_fecha'), gerenciaNota: text('gerencia_nota'),
+  // origen y cierre
+  creadoPorId: integer('creado_por_id'),
+  creadoPorNombre: text('creado_por_nombre'),
+  supervisorNombre: text('supervisor_nombre'),
+  historialId: integer('historial_id'),      // link al registro de historial cuando se aplica
+  creado: text('creado').notNull(),
+  actualizado: text('actualizado').notNull(),
+});
+
 export type Empleado = typeof empleados.$inferSelect;
 export type Categoria = typeof categorias.$inferSelect;
 export type Historial = typeof historial.$inferSelect;
 export type Usuario = typeof usuarios.$inferSelect;
 export type Propuesta = typeof propuestas.$inferSelect;
+export type Solicitud = typeof solicitudes.$inferSelect;

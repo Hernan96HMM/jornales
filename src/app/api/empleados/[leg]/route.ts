@@ -8,6 +8,7 @@ export const dynamic = 'force-dynamic';
 export async function PATCH(req: Request, { params }: { params: { leg: string } }) {
   const user = await getSession();
   if (!user) return NextResponse.json({ error: 'No autenticado' }, { status: 401 });
+  if (!['admin', 'rrhh'].includes(user.rol)) return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
   const leg = Number(params.leg);
   const b = await req.json().catch(() => ({}));
   const db = getDb();
@@ -32,6 +33,7 @@ export async function PATCH(req: Request, { params }: { params: { leg: string } 
 export async function DELETE(req: Request, { params }: { params: { leg: string } }) {
   const user = await getSession();
   if (!user) return NextResponse.json({ error: 'No autenticado' }, { status: 401 });
+  if (!['admin', 'rrhh'].includes(user.rol)) return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
   const leg = Number(params.leg);
   const url = new URL(req.url);
   const motivo = url.searchParams.get('motivo') || '';

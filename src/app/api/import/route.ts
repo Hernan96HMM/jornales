@@ -22,6 +22,7 @@ function toNum(v: unknown): number {
 export async function POST(req: Request) {
   const user = await getSession();
   if (!user) return NextResponse.json({ error: 'No autenticado' }, { status: 401 });
+  if (!['admin', 'rrhh'].includes(user.rol)) return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
 
   const form = await req.formData().catch(() => null);
   const file = form?.get('file');

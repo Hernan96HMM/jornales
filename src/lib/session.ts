@@ -3,11 +3,12 @@ import { SignJWT, jwtVerify } from 'jose';
 import { getSecretKey } from './secret';
 
 export const SESSION_COOKIE = 'rj_session';
-export type Rol = 'admin' | 'rrhh';
-export type SessionUser = { id: number; email: string; nombre: string; rol: Rol };
+export type Rol = 'admin' | 'rrhh' | 'supervisor' | 'gerencia';
+export type SessionUser = { id: number; email: string; nombre: string; rol: Rol; supervisorRef?: string | null };
+const ROLES: Rol[] = ['admin', 'rrhh', 'supervisor', 'gerencia'];
 
 export async function signToken(u: SessionUser): Promise<string> {
-  return new SignJWT({ id: u.id, email: u.email, nombre: u.nombre, rol: u.rol })
+  return new SignJWT({ id: u.id, email: u.email, nombre: u.nombre, rol: u.rol, supervisorRef: u.supervisorRef ?? null })
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
     .setExpirationTime('12h')
@@ -17,11 +18,13 @@ export async function signToken(u: SessionUser): Promise<string> {
 export async function verifyToken(token: string): Promise<SessionUser | null> {
   try {
     const { payload } = await jwtVerify(token, getSecretKey());
+    const rol = ROLES.includes(payload.rol as Rol) ? (payload.rol as Rol) : 'rrhh';
     return {
       id: Number(payload.id),
       email: String(payload.email),
       nombre: String(payload.nombre),
-      rol: payload.rol === 'admin' ? 'admin' : 'rrhh',
+      rol,
+      supervisorRef: (payload.supervisorRef as string | null) ?? null,
     };
   } catch {
     return null;

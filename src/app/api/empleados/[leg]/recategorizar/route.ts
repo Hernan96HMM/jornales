@@ -7,6 +7,7 @@ export const dynamic = 'force-dynamic';
 export async function POST(req: Request, { params }: { params: { leg: string } }) {
   const user = await getSession();
   if (!user) return NextResponse.json({ error: 'No autenticado' }, { status: 401 });
+  if (!['admin', 'rrhh'].includes(user.rol)) return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
   const leg = Number(params.leg);
   const b = await req.json().catch(() => ({}));
   const nuevaCategoriaId = Number(b.categoriaId);

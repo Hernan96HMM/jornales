@@ -7,16 +7,24 @@ import { listarEmpleados, getParams } from '@/lib/service';
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  const empleados = listarEmpleados(true);
+  const user = await getSession();
+  if (!user) return NextResponse.json({ error: 'No autenticado' }, { status: 401 });
+  let empleados = listarEmpleados(true);
+  // el supervisor solo ve su gente
+  if (user.rol === 'supervisor') {
+    const ref = user.supervisorRef || '';
+    empleados = empleados.filter((e) => e.supervisor === ref);
+  }
   const db = getDb();
   const categorias = db.select().from(schema.categorias).all();
   const params = getParams();
-  return NextResponse.json({ empleados, categorias, params });
+  return NextResponse.json({ empleados, categorias, params, rol: user.rol });
 }
 
 export async function POST(req: Request) {
   const user = await getSession();
   if (!user) return NextResponse.json({ error: 'No autenticado' }, { status: 401 });
+  if (!['admin', 'rrhh'].includes(user.rol)) return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
   const b = await req.json().catch(() => ({}));
   const leg = Number(b.leg);
   if (!leg || !b.nombre) return NextResponse.json({ error: 'Legajo y nombre requeridos' }, { status: 400 });

@@ -3,11 +3,15 @@ import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import type { SessionUser } from '@/lib/session';
 
-const LINKS: Array<{ href: string; label: string; ico: string; adminOnly?: boolean }> = [
+import type { Rol } from '@/lib/session';
+
+const LINKS: Array<{ href: string; label: string; ico: string; roles?: Rol[] }> = [
   { href: '/nomina', label: 'Nómina', ico: '👥' },
-  { href: '/categorias', label: 'Categorías', ico: '🏷️' },
-  { href: '/analisis', label: 'Análisis', ico: '📊', adminOnly: true },
-  { href: '/usuarios', label: 'Usuarios', ico: '🔑', adminOnly: true },
+  { href: '/informe-encargado', label: 'Informe x Encargado', ico: '📄', roles: ['admin', 'rrhh', 'gerencia'] },
+  { href: '/solicitudes', label: 'Solicitudes', ico: '📝' },
+  { href: '/categorias', label: 'Categorías', ico: '🏷️', roles: ['admin', 'rrhh'] },
+  { href: '/analisis', label: 'Análisis', ico: '📊', roles: ['admin'] },
+  { href: '/usuarios', label: 'Usuarios', ico: '🔑', roles: ['admin'] },
 ];
 
 export default function NavBar({ user }: { user: SessionUser }) {
@@ -27,7 +31,7 @@ export default function NavBar({ user }: { user: SessionUser }) {
         <div className="t">Jornales<small>Recategorización · RRHH</small></div>
       </div>
       <nav className="menu">
-        {LINKS.filter((l) => !l.adminOnly || user.rol === 'admin').map((l) => (
+        {LINKS.filter((l) => !l.roles || l.roles.includes(user.rol)).map((l) => (
           <Link key={l.href} href={l.href} className={path.startsWith(l.href) ? 'active' : ''}>
             <span className="ico">{l.ico}</span><span className="lbl">{l.label}</span>
           </Link>

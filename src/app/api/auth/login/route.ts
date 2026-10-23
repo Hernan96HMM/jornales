@@ -16,6 +16,6 @@ export async function POST(req: Request) {
   if (!user || user.activo !== 1 || !verifyPassword(String(password), user.passwordHash)) {
     return NextResponse.json({ error: 'Credenciales inválidas' }, { status: 401 });
   }
-  await createSession({ id: user.id, email: user.email, nombre: user.nombre, rol: user.rol });
+  await createSession({ id: user.id, email: user.email, nombre: user.nombre, rol: user.rol, supervisorRef: user.supervisorRef });
   return NextResponse.json({ ok: true, user: { id: user.id, email: user.email, nombre: user.nombre, rol: user.rol } });
 }

@@ -13,9 +13,11 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   const id = Number(params.id);
   const b = await req.json().catch(() => ({}));
   const db = getDb();
+  const ROLES = ['admin', 'rrhh', 'supervisor', 'gerencia'];
   const set: Record<string, unknown> = {};
   if (b.nombre !== undefined) set.nombre = String(b.nombre).trim();
-  if (b.rol !== undefined) set.rol = b.rol === 'admin' ? 'admin' : 'rrhh';
+  if (b.rol !== undefined) set.rol = ROLES.includes(b.rol) ? b.rol : 'rrhh';
+  if (b.supervisorRef !== undefined) set.supervisorRef = b.supervisorRef ? String(b.supervisorRef).trim() : null;
   if (b.activo !== undefined) set.activo = b.activo ? 1 : 0;
   if (b.password) set.passwordHash = hashPassword(String(b.password));
   if (Object.keys(set).length) db.update(schema.usuarios).set(set).where(eq(schema.usuarios.id, id)).run();
