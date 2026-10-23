@@ -13,3 +13,6 @@ npm-debug.log*
 
 # datos reales de empleados (PII) — nunca a git
 src/db/seed-data.real.json
+
+# copias/entregas comprimidas (pueden traer la nómina real)
+*.zip

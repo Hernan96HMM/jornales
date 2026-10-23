@@ -13,6 +13,9 @@ export async function GET(_req: Request, { params }: { params: { leg: string } }
   const db = getDb();
   const emp = db.select().from(schema.empleados).where(eq(schema.empleados.leg, leg)).get();
   if (!emp) return NextResponse.json({ error: 'Empleado inexistente' }, { status: 404 });
+  // el supervisor solo ve su gente
+  if (user.rol === 'supervisor' && emp.supervisor !== (user.supervisorRef || ''))
+    return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
   const items = db.select().from(schema.historial)
     .where(eq(schema.historial.empleadoLeg, leg))
     .orderBy(desc(schema.historial.fecha))
