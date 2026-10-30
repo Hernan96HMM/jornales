@@ -224,3 +224,17 @@ export function validarSolicitud(id: number, slot: 'rrhh' | 'gerencia', aprobado
   }
   return { estado: 'pendiente' as const };
 }
+
+/** Elimina una solicitud. Admin puede borrar cualquiera; el creador solo las que no estén aplicadas.
+    Nota: borrar una solicitud NO revierte un cambio ya aplicado ni su registro de historial. */
+export function eliminarSolicitud(id: number, user: SessionUser) {
+  const db = getDb();
+  const s = db.select().from(schema.solicitudes).where(eq(schema.solicitudes.id, id)).get();
+  if (!s) throw new Error('Solicitud inexistente');
+  const esAdmin = user.rol === 'admin';
+  const esCreador = s.creadoPorId === user.id;
+  if (!esAdmin && !(esCreador && s.estado !== 'aplicada'))
+    throw new Error('No autorizado para eliminar esta solicitud');
+  db.delete(schema.solicitudes).where(eq(schema.solicitudes.id, id)).run();
+  return { ok: true };
+}

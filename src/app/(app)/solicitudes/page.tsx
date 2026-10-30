@@ -10,7 +10,7 @@ type Sol = {
   adicActual: number | null; adicPropuesto: number | null; supervisorNombre: string | null;
   estado: 'pendiente' | 'rechazada' | 'aprobada' | 'aplicada';
   rrhhEstado: string; rrhhUsuario: string | null; gerenciaEstado: string; gerenciaUsuario: string | null;
-  creado: string; creadoPorNombre: string | null;
+  creado: string; creadoPorNombre: string | null; creadoPorId: number | null;
 };
 
 const estadoBadge = (e: string) => e === 'aplicada' || e === 'aprobada' ? 'b-alta' : e === 'rechazada' || e === 'rechazado' ? 'b-baja' : e === 'aprobado' ? 'b-alta' : 'b-rrhh';
@@ -32,6 +32,12 @@ export default function SolicitudesPage() {
     catch (e) { toast((e as Error).message, 'err'); }
     setLoading(false);
   }
+  async function eliminar(s: Sol) {
+    if (!confirm(`¿Eliminar la solicitud ${s.numero}?\n(No revierte cambios ya aplicados ni el historial.)`)) return;
+    try { await api(`/api/solicitudes/${s.id}`, { method: 'DELETE' }); toast('Solicitud eliminada', 'warn'); load(); }
+    catch (e) { toast((e as Error).message, 'err'); }
+  }
+  const puedeEliminar = (s: Sol) => user.rol === 'admin' || (s.creadoPorId === user.id && s.estado !== 'aplicada');
 
   const kpis = useMemo(() => ({
     total: sols.length,
@@ -81,6 +87,7 @@ export default function SolicitudesPage() {
                           <Link className="btn btn-sm" href={`/solicitudes/${s.id}/imprimir`} target="_blank">🖨 Ver / PDF</Link>
                           {abierta && puedeRRHH && s.rrhhEstado === 'pendiente' && <button className="btn-sm" onClick={() => setValModal({ sol: s, slot: 'rrhh' })}>Validar RRHH</button>}
                           {abierta && puedeGerencia && s.gerenciaEstado === 'pendiente' && <button className="btn-sm" onClick={() => setValModal({ sol: s, slot: 'gerencia' })}>Validar Gerencia</button>}
+                          {puedeEliminar(s) && <button className="btn-sm btn-danger" title="Eliminar solicitud" onClick={() => eliminar(s)}>🗑</button>}
                         </div>
                       </td>
                     </tr>

@@ -24,7 +24,7 @@ export default function NominaPage() {
   const [q, setQ] = useState(''); const [fsup, setFsup] = useState(''); const [fdep, setFdep] = useState('');
   const [fcat, setFcat] = useState(''); const [festado, setFestado] = useState('activos');
   const [expand, setExpand] = useState<Set<number>>(new Set());
-  const [modal, setModal] = useState<null | { tipo: 'nuevo' | 'recat' | 'inc' | 'solicitud'; emp?: Emp }>(null);
+  const [modal, setModal] = useState<null | { tipo: 'nuevo' | 'recat' | 'inc' | 'solicitud' | 'editar'; emp?: Emp }>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { setIncPres(localStorage.getItem('rj_incpres') !== '0'); load(); }, []);
@@ -131,6 +131,7 @@ export default function NominaPage() {
                         <td className="num"><b>{fmt(d.final)}</b></td>
                         <td>
                           <div className="row" style={{ gap: 5 }}>
+                            {puedeEditar && <button className="btn-sm" title="Editar datos del empleado" onClick={() => setModal({ tipo: 'editar', emp: e })}>✏️ Editar</button>}
                             {puedeEditar && <button className="btn-sm" title="Recategorizar (cambiar categoría)" onClick={() => setModal({ tipo: 'recat', emp: e })}>↑ Categoría</button>}
                             {puedeEditar && <button className="btn-sm" title="Incremento de adicional (ST Adic)" onClick={() => setModal({ tipo: 'inc', emp: e })}>＋ Adicional</button>}
                             {(esSupervisor || puedeEditar) && <button className="btn-sm btn-cel" title="Crear solicitud formal (doble validación RRHH + Gerencia + documento)" onClick={() => setModal({ tipo: 'solicitud', emp: e })}>📝 Solicitar</button>}
@@ -173,16 +174,18 @@ export default function NominaPage() {
 
 /* ===== Modal: nuevo / recategorizar / incremento ===== */
 function EmpModal({ modal, cats, supervisores, deptos, onClose, onDone }: {
-  modal: { tipo: 'nuevo' | 'recat' | 'inc' | 'solicitud'; emp?: any }; cats: Cat[];
+  modal: { tipo: 'nuevo' | 'recat' | 'inc' | 'solicitud' | 'editar'; emp?: any }; cats: Cat[];
   supervisores: string[]; deptos: string[]; onClose: () => void; onDone: () => void;
 }) {
   const e = modal.emp;
   const [form, setForm] = useState<any>(
     modal.tipo === 'nuevo'
       ? { leg: '', nombre: '', cuil: '', depto: '', supervisor: '', categoriaId: '', stAdic: 0, antig: 0, ingreso: '' }
-      : modal.tipo === 'recat' ? { categoriaId: e.categoriaId || '', nota: '' }
-        : modal.tipo === 'inc' ? { nuevoAdic: e.stAdic, nota: '' }
-          : { categoriaPropuestaId: '', adicPropuesto: '', motivoNuevasResp: false, motivoNuevoPuesto: false, motivoTareaSuperior: false, detalle: '' });
+      : modal.tipo === 'editar'
+        ? { nombre: e.nombre, cuil: e.cuil || '', depto: e.depto || '', supervisor: e.supervisor || '', categoriaId: e.categoriaId || '', stAdic: e.stAdic, antig: e.antig, ingreso: e.ingreso || '' }
+        : modal.tipo === 'recat' ? { categoriaId: e.categoriaId || '', nota: '' }
+          : modal.tipo === 'inc' ? { nuevoAdic: e.stAdic, nota: '' }
+            : { categoriaPropuestaId: '', adicPropuesto: '', motivoNuevasResp: false, motivoNuevoPuesto: false, motivoTareaSuperior: false, detalle: '' });
   const [busy, setBusy] = useState(false);
   const up = (k: string, v: any) => setForm((f: any) => ({ ...f, [k]: v }));
 
@@ -193,6 +196,10 @@ function EmpModal({ modal, cats, supervisores, deptos, onClose, onDone }: {
         if (!form.leg || !form.nombre) throw new Error('Legajo y nombre requeridos');
         await api('/api/empleados', { method: 'POST', body: JSON.stringify(form) });
         toast('Empleado creado');
+      } else if (modal.tipo === 'editar') {
+        if (!form.nombre) throw new Error('El nombre es requerido');
+        await api(`/api/empleados/${e.leg}`, { method: 'PATCH', body: JSON.stringify(form) });
+        toast('Datos actualizados');
       } else if (modal.tipo === 'recat') {
         if (!form.categoriaId) throw new Error('Elegí la categoría destino');
         const r = await api(`/api/empleados/${e.leg}/recategorizar`, { method: 'POST', body: JSON.stringify(form) });
@@ -209,8 +216,9 @@ function EmpModal({ modal, cats, supervisores, deptos, onClose, onDone }: {
     } catch (err) { toast((err as Error).message, 'err'); setBusy(false); }
   }
 
-  const titulo = modal.tipo === 'nuevo' ? 'Nuevo empleado' : modal.tipo === 'recat' ? `Recategorizar — ${e.nombre}`
-    : modal.tipo === 'inc' ? `Incremento de adicional — ${e.nombre}` : `Solicitar cambio — ${e.nombre}`;
+  const titulo = modal.tipo === 'nuevo' ? 'Nuevo empleado' : modal.tipo === 'editar' ? `Editar datos — ${e.nombre}`
+    : modal.tipo === 'recat' ? `Recategorizar — ${e.nombre}`
+      : modal.tipo === 'inc' ? `Incremento de adicional — ${e.nombre}` : `Solicitar cambio — ${e.nombre}`;
   return (
     <div className="modal-bg" onClick={onClose}>
       <div className="modal" onClick={(ev) => ev.stopPropagation()}>
@@ -228,6 +236,21 @@ function EmpModal({ modal, cats, supervisores, deptos, onClose, onDone }: {
               <label className="fld">Antigüedad (años)<input type="number" step="any" value={form.antig} onChange={(ev) => up('antig', ev.target.value)} /></label>
               <label className="fld">Fecha de ingreso<input type="date" value={form.ingreso} onChange={(ev) => up('ingreso', ev.target.value)} /></label>
             </div>
+          )}
+          {modal.tipo === 'editar' && (
+            <>
+              <div className="grid2">
+                <label className="fld">Apellido y Nombre<input value={form.nombre} onChange={(ev) => up('nombre', ev.target.value)} /></label>
+                <label className="fld">CUIL<input value={form.cuil} onChange={(ev) => up('cuil', ev.target.value)} /></label>
+                <label className="fld">Departamento<input list="deptos" value={form.depto} onChange={(ev) => up('depto', ev.target.value)} /><datalist id="deptos">{deptos.map((d) => <option key={d} value={d} />)}</datalist></label>
+                <label className="fld">Encargado / Supervisor<input list="sups" value={form.supervisor} onChange={(ev) => up('supervisor', ev.target.value)} /><datalist id="sups">{supervisores.map((s) => <option key={s} value={s} />)}</datalist></label>
+                <label className="fld">Antigüedad (años)<input type="number" step="any" value={form.antig} onChange={(ev) => up('antig', ev.target.value)} /></label>
+                <label className="fld">Fecha de ingreso<input type="date" value={form.ingreso} onChange={(ev) => up('ingreso', ev.target.value)} /></label>
+                <label className="fld">Categoría (corrección)<select value={form.categoriaId} onChange={(ev) => up('categoriaId', ev.target.value)}><option value="">—</option>{cats.map((c) => <option key={c.id} value={c.id}>{c.nombre} (${fmt0(c.basico)})</option>)}</select></label>
+                <label className="fld">ST Adic (corrección)<input type="number" step="any" value={form.stAdic} onChange={(ev) => up('stAdic', ev.target.value)} /></label>
+              </div>
+              <p style={{ marginTop: 10, fontSize: 12, color: 'var(--amb)' }}>ℹ️ Editar acá es una <b>corrección de datos</b> (no genera historial). Para cambios con registro usá <b>↑ Categoría</b> o <b>＋ Adicional</b>.</p>
+            </>
           )}
           {modal.tipo === 'recat' && (
             <>

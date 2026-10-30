@@ -57,6 +57,9 @@ export default function ImprimirSolicitud({ params }: { params: { id: string } }
         .doc th{background:#eef3f9;color:#314973}
         .doc td.l{text-align:left}
         .doc .num{text-align:right;font-variant-numeric:tabular-nums}
+        /* grilla de categorías: ajustar al ancho de la página (columnas iguales, texto que envuelve) */
+        .doc .grid-cat{table-layout:fixed}
+        .doc .grid-cat th,.doc .grid-cat td{font-size:8.5px;padding:4px 2px;word-break:break-word;white-space:normal;line-height:1.15;text-align:center}
         .doc .crit{font-size:11.5px;color:#444;margin:3px 0}
         .doc .crit b{color:#314973}
         .doc .firmas{display:flex;gap:30px;margin-top:42px;text-align:center}
@@ -101,11 +104,11 @@ export default function ImprimirSolicitud({ params }: { params: { id: string } }
       {CRITERIOS.map(([t, d]) => <div className="crit" key={t}><b>{t}:</b> {d}</div>)}
 
       <div className="sectitle">SOLICITUD</div>
-      <table>
+      <table className="grid-cat">
         <thead><tr>{cats.map((c) => <th key={c.id}>{c.nombre}</th>)}</tr></thead>
         <tbody>
           <tr>{cats.map((c) => { const m = marca(c.nombre); return <td key={c.id} className={m === 'A' ? 'mA' : m === 'P' ? 'mP' : ''}>{m === 'A' ? 'Actual' : m === 'P' ? 'Propuesta' : ''}</td>; })}</tr>
-          <tr>{cats.map((c) => <td key={c.id} className="num">${fmt(c.basico)}</td>)}</tr>
+          <tr>{cats.map((c) => <td key={c.id}>${fmt(c.basico)}</td>)}</tr>
         </tbody>
       </table>
 
